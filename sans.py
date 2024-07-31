@@ -18,6 +18,44 @@ class AlarmApp:
 
         self.alarm_sound = "default_alarm.wav"
         self.alarms = []
+        self.ringtones = ["default_alarm.wav", "surfing.wav", "megalovania.wav", "metal_pipe.wav"]
+        
+        self.themes = {
+            "Default": {
+                "bg": "#2c0bb0", "fg": "white", "button_bg": "#1a0663",
+                "clock_bg": "grey", "clock_fg": "white", "clock_hands": "white", "clock_second_hand": "red"
+            },
+            "Dark": {
+                "bg": "#1e1e1e", "fg": "white", "button_bg": "#2e2e2e",
+                "clock_bg": "#2e2e2e", "clock_fg": "white", "clock_hands": "white", "clock_second_hand": "red"
+            },
+            "Light": {
+                "bg": "#f0f0f0", "fg": "black", "button_bg": "#e0e0e0",
+                "clock_bg": "#e0e0e0", "clock_fg": "black", "clock_hands": "black", "clock_second_hand": "red"
+            },
+            "Pink": {
+                "bg": "#ffc0cb", "fg": "#ff69b4", "button_bg": "#ffb6c1",
+                "clock_bg": "#ffb6c1", "clock_fg": "#ff69b4", "clock_hands": "#ff69b4", "clock_second_hand": "#ff1493"
+            },
+            "Purple": {
+                "bg": "#6a0dad", "fg": "white", "button_bg": "#4b0082",
+                "clock_bg": "#4b0082", "clock_fg": "white", "clock_hands": "white", "clock_second_hand": "#8a2be2"
+            },
+            "Ocean": {
+                "bg": "#00bcd4", "fg": "white", "button_bg": "#0097a7",
+                "clock_bg": "#0097a7", "clock_fg": "white", "clock_hands": "white", "clock_second_hand": "#ff5722"
+            },
+            "Sunset": {
+                "bg": "#ff5722", "fg": "white", "button_bg": "#e64a19",
+                "clock_bg": "#e64a19", "clock_fg": "white", "clock_hands": "white", "clock_second_hand": "#ff9800"
+            },
+            "Forest": {
+                "bg": "#228b22", "fg": "white", "button_bg": "#006400",
+                "clock_bg": "#006400", "clock_fg": "white", "clock_hands": "white", "clock_second_hand": "#2e8b57"
+            }
+        }
+        
+        self.current_theme = "Default"
         
         self.load_images()
         self.setup_ui()
@@ -25,7 +63,7 @@ class AlarmApp:
     def load_images(self):
         # Load and resize images for buttons
         button_size = (50, 50)  # Consistent size for all icons
-        self.img_alarm = ImageTk.PhotoImage(Image.open("alarm_icon.png").resize(button_size))
+        self.img_settings = ImageTk.PhotoImage(Image.open("settings_icon.png").resize(button_size))
         self.img_world = ImageTk.PhotoImage(Image.open("world_icon.png").resize(button_size))
         self.img_stopwatch = ImageTk.PhotoImage(Image.open("stopwatch_icon.png").resize(button_size))
         self.img_timer = ImageTk.PhotoImage(Image.open("timer_icon.png").resize(button_size))
@@ -38,44 +76,47 @@ class AlarmApp:
         self.create_alarm_list()
         
     def create_canvas(self):
-        self.canvas = tk.Canvas(self.master, width=500, height=700, bg="#2c0bb0")
+        self.canvas = tk.Canvas(self.master, width=500, height=700, bg=self.themes[self.current_theme]["bg"])
         self.canvas.place(x=0, y=0)
-        self.canvas.create_rectangle(0, 620, 500, 700, fill="#1a0663", outline="")
+        self.canvas.create_rectangle(0, 620, 500, 700, fill=self.themes[self.current_theme]["button_bg"], outline="")
         
     def create_buttons(self):
         buttons = [
-            ('Alarms', self.img_alarm, 30, 630),
+            ('Settings', self.img_settings, 30, 630, self.open_settings),
             ('World\nClock', self.img_world, 150, 630, self.open_world_clock),
             ('Stopwatch', self.img_stopwatch, 270, 630, self.open_stopwatch),
             ('Timer', self.img_timer, 390, 630, self.open_timer)
         ]
         
-        for text, image, x, y, *args in buttons:
-            command = args[0] if args else None
+        for text, image, x, y, command in buttons:
             btn = tk.Button(self.master, image=image, text=text, compound=tk.TOP, 
-                            font=("Helvetica", 10, "bold"), fg="white", bg="#1a0663", 
+                            font=("Helvetica", 10, "bold"), fg=self.themes[self.current_theme]["fg"], 
+                            bg=self.themes[self.current_theme]["button_bg"], 
                             bd=0, command=command)
             btn.place(x=x, y=y)
         
         add_alarm_btn = tk.Button(self.master, text="+ Add New Alarm", font=("Helvetica", 12, "bold"), 
-                                  fg="white", bg="#4CAF50", command=self.open_alarm_page)
-        add_alarm_btn.place(x=175, y=310, width=150, height=40)
+                              fg=self.themes[self.current_theme]["fg"], bg="#4CAF50", command=self.open_alarm_page)
+        add_alarm_btn.place(relx=0.5, y=340, anchor=tk.CENTER, width=150, height=40)
         
     def create_labels(self):
-        tk.Label(self.master, text='Good Afternoon, User', font=("Helvetica", 24, "bold"), 
-                 fg="white", bg="#2c0bb0").place(x=20, y=20)
-        tk.Label(self.master, text='Your Alarms', font=("Helvetica", 18, "bold"), 
-                 fg="white", bg="#2c0bb0").place(x=20, y=360)
+        greeting_label = tk.Label(self.master, text='Good Afternoon, User', font=("Consolas", 24, "bold"), 
+                 fg=self.themes[self.current_theme]["fg"], bg=self.themes[self.current_theme]["bg"])
+        greeting_label.place(relx=0.5, y=20, anchor=tk.N)
         
+        alarms_label = tk.Label(self.master, text='Your Alarms', font=("Helvetica", 18, "bold"), 
+                 fg=self.themes[self.current_theme]["fg"], bg=self.themes[self.current_theme]["bg"])
+        alarms_label.place(relx=0.5, y=380, anchor=tk.CENTER)
+
     def create_analog_clock(self):
-        self.clock_canvas = tk.Canvas(self.master, width=250, height=250, bg='#2c0bb0', highlightthickness=0)
-        self.clock_canvas.place(x=125, y=60)
+        self.clock_canvas = tk.Canvas(self.master, width=250, height=250, bg=self.themes[self.current_theme]["clock_bg"], highlightthickness=0)
+        self.clock_canvas.place(relx=0.5, y=185, anchor=tk.CENTER)
         self.draw_clock_face()
         self.update_clock()
         
     def draw_clock_face(self):
         # Draw clock circle
-        self.clock_canvas.create_oval(10, 10, 240, 240, outline="white", width=3)
+        self.clock_canvas.create_oval(10, 10, 240, 240, outline=self.themes[self.current_theme]["clock_fg"], width=3)
         # Draw hour markers
         for i in range(12):
             angle = i * math.pi/6 - math.pi/2
@@ -83,7 +124,7 @@ class AlarmApp:
             y1 = 125 + 105 * math.sin(angle)
             x2 = 125 + 115 * math.cos(angle)
             y2 = 125 + 115 * math.sin(angle)
-            self.clock_canvas.create_line(x1, y1, x2, y2, fill="white", width=3)
+            self.clock_canvas.create_line(x1, y1, x2, y2, fill=self.themes[self.current_theme]["clock_fg"], width=3)
         
     def update_clock(self):
         # Clear previous hands
@@ -98,33 +139,33 @@ class AlarmApp:
         hour_angle = (hour + minute/60) * math.pi/6 - math.pi/2
         hour_x = 125 + 70 * math.cos(hour_angle)
         hour_y = 125 + 70 * math.sin(hour_angle)
-        self.clock_canvas.create_line(125, 125, hour_x, hour_y, fill="white", width=6, tags="hands")
+        self.clock_canvas.create_line(125, 125, hour_x, hour_y, fill=self.themes[self.current_theme]["clock_hands"], width=6, tags="hands")
 
         # Minute hand
         minute_angle = (minute + second/60) * math.pi/30 - math.pi/2
         minute_x = 125 + 90 * math.cos(minute_angle)
         minute_y = 125 + 90 * math.sin(minute_angle)
-        self.clock_canvas.create_line(125, 125, minute_x, minute_y, fill="white", width=4, tags="hands")
+        self.clock_canvas.create_line(125, 125, minute_x, minute_y, fill=self.themes[self.current_theme]["clock_hands"], width=4, tags="hands")
 
         # Second hand
         second_angle = second * math.pi/30 - math.pi/2
         second_x = 125 + 100 * math.cos(second_angle)
         second_y = 125 + 100 * math.sin(second_angle)
-        self.clock_canvas.create_line(125, 125, second_x, second_y, fill="red", width=2, tags="hands")
+        self.clock_canvas.create_line(125, 125, second_x, second_y, fill=self.themes[self.current_theme]["clock_second_hand"], width=2, tags="hands")
 
         # Draw center circle
-        self.clock_canvas.create_oval(120, 120, 130, 130, fill="white", outline="")
+        self.clock_canvas.create_oval(120, 120, 130, 130, fill=self.themes[self.current_theme]["clock_hands"], outline="")
 
         self.master.after(1000, self.update_clock)
 
     def create_alarm_list(self):
-        self.alarm_frame = tk.Frame(self.master, bg="#2c0bb0")
-        self.alarm_frame.place(x=20, y=400, width=460, height=210)
+        self.alarm_frame = tk.Frame(self.master, bg=self.themes[self.current_theme]["bg"])
+        self.alarm_frame.place(relx=0.5, y=510, anchor=tk.CENTER, width=460, height=210)
         
-        self.alarm_canvas = tk.Canvas(self.alarm_frame, bg="#2c0bb0", highlightthickness=0)
+        self.alarm_canvas = tk.Canvas(self.alarm_frame, bg=self.themes[self.current_theme]["bg"], highlightthickness=0)
         self.alarm_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        self.inner_frame = tk.Frame(self.alarm_canvas, bg="#2c0bb0")
+        self.inner_frame = tk.Frame(self.alarm_canvas, bg=self.themes[self.current_theme]["bg"])
         self.alarm_canvas.create_window((0, 0), window=self.inner_frame, anchor="nw")
 
         # Only add scrollbar if needed
@@ -178,7 +219,40 @@ class AlarmApp:
                 winsound.PlaySound(self.alarm_sound, winsound.SND_ASYNC | winsound.SND_LOOP)
                 if messagebox.askokcancel("Alarm", f"{alarm_name}\nTime to wake up! Click OK to stop the alarm."):
                     winsound.PlaySound(None, 0)  # Stop the sound
+                self.delete_alarm_by_time(alarm_time)  # Delete the alarm after it goes off
                 break
+
+    def apply_theme(self, theme_name):
+        self.current_theme = theme_name
+        self.canvas.config(bg=self.themes[theme_name]["bg"])
+        self.canvas.create_rectangle(0, 620, 500, 700, fill=self.themes[theme_name]["button_bg"], outline="")
+        
+        for widget in self.master.winfo_children():
+            if isinstance(widget, tk.Button):
+                widget.config(fg=self.themes[theme_name]["fg"], bg=self.themes[theme_name]["button_bg"])
+            elif isinstance(widget, tk.Label):
+                widget.config(fg=self.themes[theme_name]["fg"], bg=self.themes[theme_name]["bg"])
+        
+        self.alarm_frame.config(bg=self.themes[theme_name]["bg"])
+        self.alarm_canvas.config(bg=self.themes[theme_name]["bg"])
+        self.inner_frame.config(bg=self.themes[theme_name]["bg"])
+        
+        # Update clock colors
+        self.clock_canvas.config(bg=self.themes[theme_name]["clock_bg"])
+        self.clock_canvas.delete("all")  # Clear the entire clock
+        self.draw_clock_face()  # Redraw the clock face with new colors
+        
+        self.update_alarm_list()
+        
+    def open_settings(self):
+        SettingsPage(self.master, self) 
+
+    def delete_alarm_by_time(self, alarm_time):
+        self.alarms = [(time, name) for time, name in self.alarms if time != alarm_time]
+        self.update_alarm_list()
+
+    def open_settings(self):
+        SettingsPage(self.master, self)
             
     def open_alarm_page(self):
         AlarmPage(self.master, self)
@@ -213,32 +287,31 @@ class AlarmPage(tk.Toplevel):
         
         time_frame = tk.Frame(self, bg="#2c0bb0")
         time_frame.pack(pady=10)
-        tk.Label(time_frame, text="Set Time:", font=("Helvetica", 12), fg="white", bg="#2c0bb0").pack(side=tk.LEFT, padx=5)
+        tk.Label(time_frame, text="Set Time (HH:MM):", font=("Helvetica", 12), fg="white", bg="#2c0bb0").pack(side=tk.LEFT, padx=5)
         
-        self.hour = tk.StringVar(value="00")
-        self.minute = tk.StringVar(value="00")
-        
-        ttk.OptionMenu(time_frame, self.hour, "00", *[f"{i:02d}" for i in range(24)]).pack(side=tk.LEFT, padx=5)
-        ttk.OptionMenu(time_frame, self.minute, "00", *[f"{i:02d}" for i in range(60)]).pack(side=tk.LEFT, padx=5)
+        self.time_entry = tk.Entry(time_frame, font=("Helvetica", 12), width=5)
+        self.time_entry.pack(side=tk.LEFT, padx=5)
         
         tk.Button(self, text="Set Alarm", font=("Helvetica", 12, "bold"), fg="white", bg="#4CAF50", command=self.set_alarm).pack(pady=20)
         
-        tk.Button(self, text="Select Ringtone", font=("Helvetica", 12), fg="white", bg="#3d14d1", command=self.select_ringtone).pack()
-        
-        self.ringtone_label = tk.Label(self, text=f"Current ringtone: {os.path.basename(self.app.alarm_sound)}", 
-                                       font=("Helvetica", 10), fg="white", bg="#2c0bb0")
-        self.ringtone_label.pack(pady=5)
+        tk.Label(self, text="Select Ringtone:", font=("Helvetica", 12), fg="white", bg="#2c0bb0").pack()
+        self.ringtone_var = tk.StringVar(value=self.app.alarm_sound)
+        ringtone_menu = ttk.Combobox(self, textvariable=self.ringtone_var, values=self.app.ringtones, state="readonly")
+        ringtone_menu.pack(pady=5)
         
     def set_alarm(self):
         alarm_name = self.name_entry.get() or "Alarm"
-        alarm_time = datetime.now().replace(
-            hour=int(self.hour.get()),
-            minute=int(self.minute.get()),
-            second=0,
-            microsecond=0
-        )
-        self.app.add_alarm(alarm_time, alarm_name)
-        self.destroy()
+        time_str = self.time_entry.get()
+        try:
+            alarm_time = datetime.strptime(time_str, "%H:%M").time()
+            alarm_datetime = datetime.combine(datetime.now().date(), alarm_time)
+            if alarm_datetime <= datetime.now():
+                alarm_datetime += timedelta(days=1)
+            self.app.alarm_sound = self.ringtone_var.get()
+            self.app.add_alarm(alarm_datetime, alarm_name)
+            self.destroy()
+        except ValueError:
+            messagebox.showerror("Invalid Time", "Please enter a valid time in HH:MM format.")
     
     def select_ringtone(self):
         file_path = filedialog.askopenfilename(filetypes=[("WAV files", "*.wav")])
@@ -254,12 +327,15 @@ class StopPage(tk.Toplevel):
         self.setup_ui()
         
     def setup_ui(self):
-        tk.Label(self, text="68 + 1 = ", font=("Serif", 18, "bold")).place(x=100, y=60)
+        main_frame = tk.Frame(self)
+        main_frame.pack(expand=True)
         
-        self.entry = tk.Entry(self)
-        self.entry.place(x=200, y=70)
+        tk.Label(main_frame, text="68 + 1 = ", font=("Serif", 18, "bold")).pack(pady=10)
         
-        tk.Button(self, text="Submit", command=self.check_answer).place(x=180, y=100)
+        self.entry = tk.Entry(main_frame)
+        self.entry.pack(pady=10)
+        
+        tk.Button(main_frame, text="Submit", command=self.check_answer).pack(pady=10)
         
     def check_answer(self):
         if self.entry.get() == "69":
@@ -290,9 +366,9 @@ class WorldClockPage(tk.Toplevel):
             frame = tk.Frame(self)
             frame.pack(pady=5)
             
-            tk.Label(frame, text=f"{city}:", font=("Helvetica", 14, "bold")).pack(side=tk.LEFT, padx=(0, 10))
+            tk.Label(frame, text=f"{city}:", font=("Helvetica", 14, "bold"), width=15, anchor="e").pack(side=tk.LEFT, padx=(0, 10))
             
-            time_label = tk.Label(frame, text="", font=("Helvetica", 14))
+            time_label = tk.Label(frame, text="", font=("Helvetica", 14), width=15, anchor="w")
             time_label.pack(side=tk.LEFT)
             
             self.clock_frames[city] = frame
@@ -319,10 +395,13 @@ class StopwatchPage(tk.Toplevel):
         self.setup_ui()
 
     def setup_ui(self):
-        self.time_label = tk.Label(self, text="00:00:00.000", font=("Helvetica", 24))
+        main_frame = tk.Frame(self)
+        main_frame.pack(expand=True)
+        
+        self.time_label = tk.Label(main_frame, text="00:00:00.000", font=("Helvetica", 24))
         self.time_label.pack(pady=20)
 
-        button_frame = tk.Frame(self)
+        button_frame = tk.Frame(main_frame)
         button_frame.pack(pady=10)
 
         self.start_stop_button = tk.Button(button_frame, text="Start", command=self.toggle_stopwatch)
@@ -370,7 +449,10 @@ class TimerPage(tk.Toplevel):
         self.setup_ui()
 
     def setup_ui(self):
-        input_frame = tk.Frame(self)
+        main_frame = tk.Frame(self)
+        main_frame.pack(expand=True)
+        
+        input_frame = tk.Frame(main_frame)
         input_frame.pack(pady=10)
 
         self.hours_entry = tk.Entry(input_frame, width=3)
@@ -385,10 +467,10 @@ class TimerPage(tk.Toplevel):
         self.seconds_entry.pack(side=tk.LEFT)
         tk.Label(input_frame, text="s").pack(side=tk.LEFT)
 
-        self.time_label = tk.Label(self, text="00:00:00", font=("Helvetica", 24))
+        self.time_label = tk.Label(main_frame, text="00:00:00", font=("Helvetica", 24))
         self.time_label.pack(pady=20)
 
-        button_frame = tk.Frame(self)
+        button_frame = tk.Frame(main_frame)
         button_frame.pack(pady=10)
 
         self.start_stop_button = tk.Button(button_frame, text="Start", command=self.toggle_timer)
@@ -441,6 +523,33 @@ class TimerPage(tk.Toplevel):
         self.hours_entry.delete(0, tk.END)
         self.minutes_entry.delete(0, tk.END)
         self.seconds_entry.delete(0, tk.END)
+
+class SettingsPage(tk.Toplevel):
+    def __init__(self, parent, app):
+        super().__init__(parent)
+        self.app = app
+        self.title("Settings")
+        self.geometry("300x200")
+        self.setup_ui()
+        
+    def setup_ui(self):
+        main_frame = tk.Frame(self)
+        main_frame.pack(expand=True)
+        
+        tk.Label(main_frame, text="Settings", font=("Helvetica", 20, "bold")).pack(pady=10)
+        
+        tk.Label(main_frame, text="Select Theme:").pack()
+        self.theme_var = tk.StringVar(value=self.app.current_theme)
+        theme_menu = ttk.Combobox(main_frame, textvariable=self.theme_var, values=list(self.app.themes.keys()), state="readonly")
+        theme_menu.pack(pady=5)
+        
+        apply_button = tk.Button(main_frame, text="Apply Theme", command=self.apply_theme)
+        apply_button.pack(pady=10)
+        
+    def apply_theme(self):
+        selected_theme = self.theme_var.get()
+        self.app.apply_theme(selected_theme)
+        messagebox.showinfo("Theme Applied", f"The {selected_theme} theme has been applied.")
 
 if __name__ == "__main__":
     root = tk.Tk()
